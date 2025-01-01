@@ -25,7 +25,6 @@ Desktop.ini
 
 # Environment-specific files
 .env
-application.properties
 application.yml
 
 # Documentation

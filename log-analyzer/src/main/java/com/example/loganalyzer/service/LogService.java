@@ -4,9 +4,12 @@ import com.example.loganalyzer.model.Log;
 import com.example.loganalyzer.model.Threat;
 import com.example.loganalyzer.repository.LogRepository;
 import com.example.loganalyzer.repository.ThreatRepository;
-import com.example.loganalyzer.utils.ThreatAnalyzer;
+import com.example.loganalyzer.utils.ThreatAnalyser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class LogService {
@@ -18,20 +21,37 @@ public class LogService {
     private ThreatRepository threatRepository;
 
     @Autowired
-    private ThreatAnalyzer threatAnalyzer;
+    private ThreatAnalyser threatAnalyser;
 
     public Log saveLog(Log log) {
-        log = logRepository.save(log);
-
-        Threat threat = threatAnalyzer.detectThreat(log);
-        if (threat != null) {
-            threatRepository.save(threat);
-        }
-
-        return log;
+        return logRepository.save(log); // Save log to Elasticsearch
     }
 
-    public Iterable<Threat> getAllThreats() {
-        return threatRepository.findAll();
+    public List<Threat> detectAndSaveThreats() {
+        List<Threat> detectedThreats = threatAnalyser.findThreatsInLogs();
+        for (Threat threat : detectedThreats) {
+            threatRepository.save(threat); // Save threats to Elasticsearch
+        }
+        return detectedThreats;
+    }
+
+    public List<Threat> detectAndSaveThreatsByType(String threatType) {
+        List<Threat> detectedThreats = threatAnalyser.findThreatsInLogsByType(threatType);
+        for (Threat threat : detectedThreats) {
+            threatRepository.save(threat); // Save threats to Elasticsearch
+        }
+        return detectedThreats;
+    }
+
+    public List<Threat> getAllThreats() {
+        List<Threat> threats = new ArrayList<>();
+        threatRepository.findAll().forEach(threats::add);
+        return threats;
+    }
+
+    public List<Log> getAllLogs() {
+        List<Log> logs = new ArrayList<>();
+        logRepository.findAll().forEach(logs::add);
+        return logs;
     }
 }
