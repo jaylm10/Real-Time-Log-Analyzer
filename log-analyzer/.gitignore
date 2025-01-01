@@ -1,0 +1,32 @@
+# Maven directories
+/target/
+.mvn/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE directories
+.idea/
+*.iml
+.vscode/
+
+# OS-specific files
+.DS_Store
+.AppleDouble
+Thumbs.db
+Desktop.ini
+
+# Logs and temporary files
+*.log
+/logs/
+*.tmp
+*.bak
+*.swp
+*.swo
+*.orig
+
+# Environment-specific files
+.env
+application.properties
+application.yml
+
+# Documentation
+HELP.md
