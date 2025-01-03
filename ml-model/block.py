@@ -49,8 +49,6 @@ def main(log_file, output_file, block_ips_file):
     malicious_ips = df[df['category'] == 'Threat']['ip'].unique().tolist()
 
     # Save the list of malicious IPs to block
-    with open(block_ips_file, 'w') as f:
-        json.dump(malicious_ips, f, indent=4)
 
     # Send the block_ips.json file to Elasticsearch
     es = Elasticsearch(

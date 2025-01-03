@@ -46,6 +46,7 @@
 192.168.1.4 - - [03/Jan/2025:12:15:00] "GET /products.php?category=electronics&sql=1 HTTP/1.1" 200 4500
 192.168.1.5 - - [03/Jan/2025:12:20:00] "POST /login.php?user=guest&password=secret HTTP/1.1" 401 1345
 192.168.1.6 - - [03/Jan/2025:12:25:00] "POST /index.php?cmd=check_dos_attack HTTP/1.1" 500 2235
+192.168.1.6 - - [03/Jan/2025:12:25:00] "POST /index.php?cmd=check_dos_attack HTTP/1.1" 500 2235
 192.168.1.7 - - [03/Jan/2025:12:30:00] "GET /info.php?mitm_data=true HTTP/1.1" 403 1100
 192.168.1.8 - - [03/Jan/2025:12:35:00] "GET /contact.php?sql_injection&admin=true HTTP/1.1" 200 1780
 192.168.1.9 - - [03/Jan/2025:12:40:00] "POST /login.php?cmd=do_attack_dos HTTP/1.1" 500 2100

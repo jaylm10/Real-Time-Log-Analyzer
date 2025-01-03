@@ -11,6 +11,39 @@
         "threat_type": null
     },
     {
+        "ip": "192.168.1.1",
+        "timestamp": "01/Jan/2025:12:34:56 +0000",
+        "request_method": "GET",
+        "url": "/index.html",
+        "status": 200,
+        "size": 1024,
+        "anomaly": 1,
+        "category": "Normal",
+        "threat_type": null
+    },
+    {
+        "ip": "203.0.113.45",
+        "timestamp": "01/Jan/2025:12:35:22 +0000",
+        "request_method": "POST",
+        "url": "/login",
+        "status": 302,
+        "size": 512,
+        "anomaly": -1,
+        "category": "Threat",
+        "threat_type": "Unknown Threat"
+    },
+    {
+        "ip": "203.0.113.45",
+        "timestamp": "01/Jan/2025:12:35:22 +0000",
+        "request_method": "POST",
+        "url": "/login",
+        "status": 302,
+        "size": 512,
+        "anomaly": -1,
+        "category": "Threat",
+        "threat_type": "Unknown Threat"
+    },
+    {
         "ip": "203.0.113.45",
         "timestamp": "01/Jan/2025:12:35:22 +0000",
         "request_method": "POST",
@@ -512,6 +545,17 @@
         "url": "/login.php?user=guest&password=secret",
         "status": 401,
         "size": 1345,
+        "anomaly": 1,
+        "category": "Normal",
+        "threat_type": null
+    },
+    {
+        "ip": "192.168.1.6",
+        "timestamp": "03/Jan/2025:12:25:00",
+        "request_method": "POST",
+        "url": "/index.php?cmd=check_dos_attack",
+        "status": 500,
+        "size": 2235,
         "anomaly": 1,
         "category": "Normal",
         "threat_type": null

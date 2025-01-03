@@ -1,5 +1,9 @@
-from elasticsearch import Elasticsearch, helpers
+from elasticsearch import Elasticsearch
 import json
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
 
 def index_data_to_elasticsearch(json_file, es_host, index_name, username, password):
     # Initialize Elasticsearch client with authentication
@@ -17,22 +21,19 @@ def index_data_to_elasticsearch(json_file, es_host, index_name, username, passwo
     with open(json_file, 'r') as f:
         data = json.load(f)
 
-    # Prepare bulk indexing
-    actions = [
-        {
-            "_index": index_name,
-            "_source": record
-        }
-        for record in data
-    ]
+    # Index each document individually
+    for record in data:
+        try:
+            es.index(index=index_name, document=record)
+            logging.debug(f"Indexed document: {record}")
+        except Exception as e:
+            logging.error(f"Failed to index document: {record}, Error: {e}")
 
-    # Perform bulk indexing
-    helpers.bulk(es, actions)
     print(f"Data successfully indexed into Elasticsearch index: {index_name}")
 
 # Main script
 if __name__ == "__main__":
-    json_file_path = "analyzed_output.json"  # Path to your JSON file
+    json_file_path = r"E:\Real-Time-LogAnzalyzer\ml-model\analyzed_output.json"  # Path to your JSON file
     elasticsearch_host = "http://localhost:9200"  # Change to your Elasticsearch host
     index_name = "log_analysis_v4"  # Specify your desired index name
     username = "elastic"  # Replace with your Elasticsearch username
