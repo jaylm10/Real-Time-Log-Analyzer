@@ -24,6 +24,10 @@ The **Log Analyzer and Threat Detection System** is a real-time tool designed to
 - **Alerting System**: Sends notifications based on predefined criteria.
 - **Visualization**: Displays log data and insights via Kibana.
 
+##ScreenShot 
+![Screenshot 2025-01-03 143230](https://github.com/user-attachments/assets/bcdf79b8-167e-43e4-b887-86145ef7b6e7)
+
+
 ## Future Enhancements 🌟
 - **Dockerization**: Simplify deployment using Docker containers.
 - **Integration with SIEM Tools**: Extend functionality to integrate with security information and event management systems.
