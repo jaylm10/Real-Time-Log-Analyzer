@@ -1,93 +1,69 @@
-from flask import Flask, request, jsonify
 import pandas as pd
 from sklearn.ensemble import IsolationForest
+import re
 import json
-from collections import Counter
+from sklearn.metrics import accuracy_score, confusion_matrix
 
-app = Flask(__name__)
+# Function to parse the log file into a DataFrame
+def parse_log(file_path):
+    data = []
+    with open(file_path, 'r') as file:
+        for line in file:
+            match = re.match(
+                r'(?P<ip>[\d\.]+) - - \[(?P<timestamp>.+)\] "(?P<request_method>\w+) (?P<url>.+) HTTP/1\.\d" (?P<status>\d+) (?P<size>\d+)', 
+                line
+            )
+            if match:
+                data.append(match.groupdict())
+    return pd.DataFrame(data)
 
-# Model and function for threat detection
-def analyze_logs(logs):
-    df = pd.DataFrame(logs)
-
-    df['status_code'] = pd.to_numeric(df['status_code'], errors='coerce')
-    df['ip_address_numeric'] = pd.to_numeric(df['ip_address'].str.replace('.', ''), errors='coerce')
-    df = df.dropna(subset=['status_code', 'ip_address_numeric'])
-
-    # Predefined threat patterns
-    blacklisted_ips = ["192.168.1.13", "203.0.113.42"]
-    suspicious_urls = ["/admin", "/config", "/login"]
-    suspicious_user_agents = ["curl", "sqlmap", "nmap"]
-    sql_injection_keywords = ["UNION", "SELECT", "OR 1=1", "DROP TABLE", "--", "'--"]
-    xss_keywords = ["<script>", "</script>", "javascript:", "onerror=", "onload="]
-    ddos_threshold = 100
+# Function to categorize threats
+def categorize_threats(row):
+    if "sql" in row['url'].lower():
+        return "SQL INJECTION"
+    elif "dos" in row['url'].lower():
+        return "DDOS ATTACK"
+    elif "mitm" in row['url'].lower():
+        return "MAN IN THE MIDDLE"
+    else:
+        return "Unknown Threat"
     
-    df['is_mitm'] = df['url_accessed'].str.startswith('http://').astype(int)
-    df['is_blacklisted'] = df['ip_address'].isin(blacklisted_ips).astype(int)
-    df['is_suspicious_url'] = df['url_accessed'].isin(suspicious_urls).astype(int)
-    df['is_suspicious_user_agent'] = df['user_agent'].str.contains('|'.join(suspicious_user_agents), case=False, na=False).astype(int)
-    df['is_sql_injection'] = df['url_accessed'].str.contains('|'.join(sql_injection_keywords), case=False, na=False).astype(int)
 
-    ip_request_counts = df['ip_address'].value_counts()
-    ddos_ips = ip_request_counts[ip_request_counts > ddos_threshold].index.tolist()
-    df['is_ddos'] = df['ip_address'].isin(ddos_ips).astype(int)
+# Main function
+def main(log_file, output_file):
+    # Parse log file
+    df = parse_log(log_file)
 
-    # Anomaly Detection with Isolation Forest
-    model = IsolationForest(contamination=0.05, random_state=42)
-    df['anomaly'] = model.fit_predict(df[['status_code', 'ip_address_numeric']])
-    df['anomaly_score'] = model.decision_function(df[['status_code', 'ip_address_numeric']])
+    # Convert necessary columns to numeric where applicable
+    df['status'] = pd.to_numeric(df['status'], errors='coerce')
+    df['size'] = pd.to_numeric(df['size'], errors='coerce')
 
-    THREAT_THRESHOLD = -0.1
-    df['is_anomalous'] = (df['anomaly_score'] < THREAT_THRESHOLD).astype(int)
+    # Use Isolation Forest to detect anomalies
+    clf = IsolationForest(random_state=42, contamination=0.1)
+    df['anomaly'] = clf.fit_predict(df[['status', 'size']])
 
-    # Threat Classification
-    def classify_threat(row):
-        if row['is_sql_injection']:
-            return "SQL Injection"
-        elif row['is_ddos']:
-            return "DDoS Attack"
-        elif row['is_mitm']:
-            return "Man-in-the-Middle Attack"
-        elif row['is_xss']:
-            return "XSS Attack"
-        elif row['is_blacklisted']:
-            return "Blacklisted IP"
-        elif row['is_suspicious_url']:
-            return "Suspicious URL Access"
-        elif row['is_suspicious_user_agent']:
-            return "Malicious User-Agent"
-        elif row['is_anomalous']:
-            return "Anomaly Detected"
-        return "No Threat"
+    # Map anomalies to "Threat" and "Normal"
+    df['category'] = df['anomaly'].map({-1: 'Threat', 1: 'Normal'})
 
-    df['threat_type'] = df.apply(classify_threat, axis=1)
+    # Further categorize threats
+    df['threat_type'] = df.apply(
+        lambda row: categorize_threats(row) if row['category'] == 'Threat' else None, axis=1
+    )
 
-    # Filter out the logs with threats
-    threats = df[df['threat_type'] != "No Threat"]
+    # Save the output to a JSON file
+    output_data = df.to_dict(orient='records')
+    with open(output_file, 'w') as f:
+        json.dump(output_data, f, indent=4)
 
-    return threats
+    print(f"Analysis complete. Results saved to {output_file}")
 
-@app.route('/analyze', methods=['POST'])
-def analyze_logs_api():
-    try:
-        # Receive logs from the Spring Boot application in JSON format
-        logs = request.json
 
-        # Analyze the logs and classify threats
-        threats = analyze_logs(logs)
 
-        if not threats.empty:
-            response = threats[['timestamp', 'ip_address', 'status_code', 'url_accessed', 'user_agent', 'anomaly_score', 'threat_type']].to_dict(orient='records')
-            return jsonify(response), 200
-        else:
-            return jsonify({"message": "No threats detected."}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+if __name__ == "__main__":
+    log_file_path = r"E:\Real-Time-LogAnzalyzer\ml-model\user.log"
+    output_file_path = r"E:\Real-Time-LogAnzalyzer\ml-model\analyzed_output.json"
 
-# Endpoint for health check
-@app.route('/health', methods=['GET'])
-def health_check():
-    return jsonify({"status": "OK"}), 200
-
-if __name__ == "_main_":
-    app.run(port=5000)
+    # Debug the input file path
+    print(f"Reading log file from: {log_file_path}")
+    
+    main(log_file_path, output_file_path)
