@@ -44,7 +44,6 @@ public class LogService {
         List<Map<String, Object>> analyzedLogs = new ArrayList<>();
 
         try {
-            System.out.println("-----------hello");
             logger.info("Initializing search request for index: " + indexName);
             // Initialize the search request with the specified index
             SearchRequest searchRequest = new SearchRequest(indexName);
@@ -75,12 +74,12 @@ public class LogService {
                 // Get the next batch of results
                 String scrollId = response.getScrollId();
                 response = client.scroll(new SearchScrollRequest(scrollId).scroll(SCROLL), RequestOptions.DEFAULT);
-
-                // Clear scroll context
-                ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
-                clearScrollRequest.addScrollId(scrollId);
-                client.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
             }
+
+            // Clear scroll context after processing all batches
+            ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
+            clearScrollRequest.addScrollId(response.getScrollId());
+            client.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
         } catch (Exception e) {
             logger.severe("Error fetching and analyzing logs: " + e.getMessage());
             e.printStackTrace();
@@ -116,6 +115,12 @@ public class LogService {
         ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
             url, HttpMethod.POST, request, new ParameterizedTypeReference<List<Map<String, Object>>>() {}
         );
+
+        // Check for null response body
+        if (response.getBody() == null) {
+            logger.warning("Received null response body from ML model.");
+            return Collections.emptyList();
+        }
 
         // Return the response body
         return response.getBody();
